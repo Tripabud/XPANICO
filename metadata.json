@@ -1,5 +1,5 @@
 {
   "name": "XPANICO",
-  "description": "An AI-powered photo editing application that crops images to a 65:24 cinematic aspect ratio and applies classic film styles like black and white or vintage Kodak using Gemini.",
+  "description": "A photo editing application that crops images to a 65:24 cinematic aspect ratio and applies classic film style presets locally in your browser.",
   "requestFramePermissions": []
 }

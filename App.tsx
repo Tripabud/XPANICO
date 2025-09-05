@@ -1,7 +1,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { FilmStyle } from './types';
-import { applyFilmStyle } from './services/geminiService';
+import { applyLocalFilter } from './services/localFilterService';
 import FileUploader from './components/FileUploader';
 import ImageCanvas from './components/ImageCanvas';
 import Loader from './components/Loader';
@@ -60,10 +60,9 @@ const App: React.FC = () => {
     setError(null);
 
     try {
-      const base64Data = croppedImage.split(',')[1];
-      const mimeType = croppedImage.match(/data:(.*);/)?.[1] || 'image/jpeg';
-      const newImageBase64 = await applyFilmStyle(base64Data, mimeType, selectedStyle);
-      setFinalImage(`data:image/jpeg;base64,${newImageBase64}`);
+      // The local filter function is fast, but we keep the async structure for a fluid UX
+      const newImage = await applyLocalFilter(croppedImage, selectedStyle);
+      setFinalImage(newImage);
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred while applying the filter.');
@@ -90,7 +89,7 @@ const App: React.FC = () => {
         <header className="py-4 bg-base-200/50 backdrop-blur-sm border-b border-base-300">
             <div className="container mx-auto px-4">
             <h1 className="text-2xl font-bold tracking-tight text-text-primary">
-                Cinematic Crop & Filter <span className="text-brand-primary">AI</span>
+                Cinematic Crop & Filter
             </h1>
             <p className="text-sm text-text-secondary">Transform your photos with a 65:24 aspect ratio and classic film styles.</p>
             </div>
@@ -110,9 +109,11 @@ const App: React.FC = () => {
                                 <label className="block text-sm font-medium text-text-secondary mb-2">Film Style</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     <StyleButton style={FilmStyle.KODAK_GOLD} label="Kodak Gold" />
-                                    <StyleButton style={FilmStyle.BLACK_AND_WHITE} label="B&W High Contrast" />
-                                    <StyleButton style={FilmStyle.LOW_CONTRAST_BW} label="HP5 Low Contrast" />
-                                    <StyleButton style={FilmStyle.KODAK_PORTRA} label="Kodak Portra 400" />
+                                    <StyleButton style={FilmStyle.KODAK_PORTRA} label="Kodak Portra" />
+                                    <StyleButton style={FilmStyle.FUJI_SUPERIA} label="Fuji Superia" />
+                                    <StyleButton style={FilmStyle.CINESTILL_800T} label="Cinestill 800T" />
+                                    <StyleButton style={FilmStyle.BLACK_AND_WHITE} label="High Contrast B&W" />
+                                    <StyleButton style={FilmStyle.HP5} label="HP5" />
                                 </div>
                             </div>
                             
@@ -121,7 +122,7 @@ const App: React.FC = () => {
                                 disabled={isLoading || !croppedImage}
                                 className="w-full bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 ease-in-out hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
                             >
-                                {isLoading ? 'Applying Style...' : <><SparklesIcon /> Apply AI Filter</>}
+                                {isLoading ? 'Applying Style...' : <><SparklesIcon /> Apply Filter</>}
                             </button>
                             
                             {finalImage && (
@@ -152,7 +153,7 @@ const App: React.FC = () => {
                     </div>
                 )}
 
-                {isLoading && <Loader />}
+                {isLoading && <Loader isLocal={true} />}
 
                 {!isLoading && !isCropping && (finalImage || croppedImage) && (
                     <div className="space-y-4">
@@ -162,7 +163,7 @@ const App: React.FC = () => {
                         <div className="bg-base-200 p-2 rounded-lg shadow-inner aspect-cinematic">
                             <img 
                                 src={finalImage || croppedImage || ''} 
-                                alt={finalImage ? 'Final AI processed image' : 'Cropped image preview'}
+                                alt={finalImage ? 'Final filtered image' : 'Cropped image preview'}
                                 className="w-full h-full object-contain rounded"
                             />
                         </div>
